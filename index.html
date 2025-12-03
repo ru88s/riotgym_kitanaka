@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="タイマー">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <title>キックボクシング タイマー</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <div class="preset-selector">
+                <span class="preset-name" id="presetDisplay"></span>
+                <select class="preset-quick-select" id="presetQuickSelect">
+                    <option value="">カスタム</option>
+                </select>
+            </div>
+
+            <div class="round-info">
+                <span class="round-counter" id="roundCounter">R1</span>
+                <span class="status-text">準備完了</span>
+            </div>
+
+            <div class="language-switcher-top">
+                <button class="btn-language" id="languageBtn">🇺🇸 English</button>
+            </div>
+        </div>
+
+        <main class="timer-display">
+
+            <div class="time-display">
+                <span class="time">03:00</span>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" data-i18n="start">スタート</button>
+                <button class="btn btn-secondary" id="resetBtn" data-i18n="reset">リセット</button>
+                <button class="btn btn-settings" id="settingsBtn" data-i18n="settings">⚙️ 設定</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-i18n="timerSettings">タイマー設定</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="presetSelect" data-i18n="preset">プリセット</label>
+                    <select id="presetSelect">
+                        <option value="" data-i18n="custom">カスタム</option>
+                    </select>
+                </div>
+                <div class="setting-group preset-name-group" style="display: none;">
+                    <label for="presetName" data-i18n="presetName">プリセット名</label>
+                    <input type="text" id="presetName" data-i18n-placeholder="presetNamePlaceholder" placeholder="例: スパーリング用">
+                </div>
+                <div class="setting-group">
+                    <label for="roundTime" data-i18n="roundTime">ラウンド時間</label>
+                    <div class="time-unit-group">
+                        <input type="number" id="roundTime" min="1" max="600" value="2">
+                        <select id="roundTimeUnit">
+                            <option value="minutes" data-i18n="minutes">分</option>
+                            <option value="seconds" data-i18n="seconds">秒</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="bellEnabled" checked>
+                        <span data-i18n="enableBell">ホラ貝を有効にする</span>
+                    </label>
+                </div>
+                <div class="setting-group" id="bellTimeGroup">
+                    <label for="bellTime" data-i18n="bellTime">ホラ貝（秒）</label>
+                    <input type="number" id="bellTime" min="5" max="120" step="5" value="60">
+                    <small class="setting-description" data-i18n="bellTimeDescription">ラウンド終了までの残り時間でホラ貝が鳴ります</small>
+                </div>
+                <div class="setting-group">
+                    <label for="prepTime" data-i18n="intervalTime">インターバル（秒）</label>
+                    <input type="number" id="prepTime" min="0" max="120" step="5" value="30">
+                </div>
+                <div class="setting-group">
+                    <label for="totalRounds" data-i18n="totalRounds">総ラウンド数</label>
+                    <input type="number" id="totalRounds" min="0" max="99" value="0">
+                    <small class="setting-description" data-i18n="unlimited">0 = 無制限</small>
+                </div>
+                <div class="setting-group">
+                    <label for="roundStartSound" data-i18n="roundStartSound">ラウンド開始音</label>
+                    <select id="roundStartSound">
+                        <option value="gong" data-i18n="gong">ゴング</option>
+                        <option value="voice" data-i18n="voice">掛け声</option>
+                    </select>
+                </div>
+                <div class="setting-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="soundEnabled" checked>
+                        <span data-i18n="enableSound">音声を有効にする</span>
+                    </label>
+                </div>
+                <div class="setting-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="countdownEnabled" checked>
+                        <span data-i18n="enableCountdown">カウントダウン音声を有効にする</span>
+                    </label>
+                </div>
+                <div class="setting-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="vibrationEnabled" checked>
+                        <span data-i18n="enableVibration">バイブレーションを有効にする</span>
+                    </label>
+                </div>
+                <div class="pwa-info">
+                    <p data-i18n="pwaHint">💡 ヒント: このページをホーム画面に追加すると、全画面で使用できます</p>
+                    <p class="pwa-instructions" data-i18n-html="pwaInstructions">Safari: 共有ボタン → ホーム画面に追加<br>Chrome: メニュー → ホーム画面に追加</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveSettings" data-i18n="save">保存</button>
+                <button class="btn btn-primary" id="saveAsPreset" style="display: none;" data-i18n="savePreset">プリセット保存</button>
+                <button class="btn btn-warning" id="deletePreset" style="display: none;" data-i18n="delete">削除</button>
+                <button class="btn btn-secondary" id="cancelSettings" data-i18n="cancel">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
