@@ -28,6 +28,7 @@ const translations = {
         enableSound: '音声を有効にする',
         enableCountdown: 'カウントダウン音声を有効にする',
         enableVibration: 'バイブレーションを有効にする',
+        enableVoiceAlert: '残り時間を音声で通知（1分・30秒）',
         totalRounds: '総ラウンド数',
         unlimited: '無制限',
         save: '保存',
@@ -73,6 +74,7 @@ const translations = {
         enableSound: 'Enable Sound',
         enableCountdown: 'Enable Countdown Sound',
         enableVibration: 'Enable Vibration',
+        enableVoiceAlert: 'Voice alert for remaining time (1min/30sec)',
         totalRounds: 'Total Rounds',
         unlimited: 'Unlimited',
         save: 'Save',
@@ -109,7 +111,8 @@ class BoxingTimer {
             countdownEnabled: true, // カウントダウン音声の有効/無効
             roundStartSound: 'gong', // 'gong' or 'voice'
             totalRounds: 0, // 0 = 無制限
-            vibrationEnabled: true // バイブレーション
+            vibrationEnabled: true, // バイブレーション
+            voiceAlertEnabled: true // 残り時間音声通知
         };
 
         // プリセット管理
@@ -237,6 +240,7 @@ class BoxingTimer {
         this.roundStartSoundSelect = document.getElementById('roundStartSound');
         this.totalRoundsInput = document.getElementById('totalRounds');
         this.vibrationEnabledInput = document.getElementById('vibrationEnabled');
+        this.voiceAlertEnabledInput = document.getElementById('voiceAlertEnabled');
 
         // プリセット関連
         this.presetSelect = document.getElementById('presetSelect');
@@ -274,7 +278,7 @@ class BoxingTimer {
         this.bellEnabledInput.addEventListener('change', () => this.toggleBellTimeInput());
 
         // 設定値変更時の処理
-        const settingInputs = [this.roundTimeInput, this.roundTimeUnitSelect, this.bellEnabledInput, this.bellTimeInput, this.prepTimeInput, this.soundEnabledInput, this.countdownEnabledInput, this.roundStartSoundSelect, this.totalRoundsInput, this.vibrationEnabledInput];
+        const settingInputs = [this.roundTimeInput, this.roundTimeUnitSelect, this.bellEnabledInput, this.bellTimeInput, this.prepTimeInput, this.soundEnabledInput, this.countdownEnabledInput, this.roundStartSoundSelect, this.totalRoundsInput, this.vibrationEnabledInput, this.voiceAlertEnabledInput];
         settingInputs.forEach(input => {
             if (input) {
                 input.addEventListener('change', () => this.onSettingsChange());
@@ -348,7 +352,8 @@ class BoxingTimer {
             countdownEnabled: this.countdownEnabledInput.checked,
             roundStartSound: this.roundStartSoundSelect.value,
             totalRounds: parseInt(this.totalRoundsInput.value) || 0,
-            vibrationEnabled: this.vibrationEnabledInput ? this.vibrationEnabledInput.checked : true
+            vibrationEnabled: this.vibrationEnabledInput ? this.vibrationEnabledInput.checked : true,
+            voiceAlertEnabled: this.voiceAlertEnabledInput ? this.voiceAlertEnabledInput.checked : true
         };
     }
 
@@ -365,6 +370,9 @@ class BoxingTimer {
         this.totalRoundsInput.value = settings.totalRounds || 0;
         if (this.vibrationEnabledInput) {
             this.vibrationEnabledInput.checked = settings.vibrationEnabled !== false;
+        }
+        if (this.voiceAlertEnabledInput) {
+            this.voiceAlertEnabledInput.checked = settings.voiceAlertEnabled !== false;
         }
     }
 
@@ -590,6 +598,15 @@ class BoxingTimer {
                 this.vibrate([50]); // 短いバイブ
             }
 
+            // 残り時間の音声通知（ラウンド中のみ、残り1分と30秒）
+            if (this.currentPhase === 'round' && this.settings.voiceAlertEnabled) {
+                if (this.remainingTime === 60) {
+                    this.speakText(this.currentLanguage === 'ja' ? '残り1分' : '1 minute remaining');
+                } else if (this.remainingTime === 30) {
+                    this.speakText(this.currentLanguage === 'ja' ? '残り30秒' : '30 seconds remaining');
+                }
+            }
+
             // 残り10秒以下で点滅開始
             if (this.remainingTime <= 10 && this.remainingTime > 0) {
                 this.startBlink();
@@ -649,6 +666,30 @@ class BoxingTimer {
             } catch (e) {
                 console.warn('Vibration failed:', e);
             }
+        }
+    }
+
+    // 音声合成で読み上げ
+    speakText(text) {
+        if (!this.settings.soundEnabled) return;
+        if (!('speechSynthesis' in window)) {
+            console.warn('Speech synthesis not supported');
+            return;
+        }
+
+        try {
+            // 既存の発話をキャンセル
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = this.currentLanguage === 'ja' ? 'ja-JP' : 'en-US';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.warn('Speech synthesis failed:', e);
         }
     }
 
